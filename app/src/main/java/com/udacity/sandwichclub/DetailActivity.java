@@ -3,6 +3,7 @@ package com.udacity.sandwichclub;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,6 +51,7 @@ public class DetailActivity extends AppCompatActivity {
         populateUI(sandwich);
         Picasso.with(this)
                 .load(sandwich.getImage())
+                .error(R.drawable.error_image)
                 .into(ingredientsIv);
 
         setTitle(sandwich.getMainName());
@@ -66,25 +68,33 @@ public class DetailActivity extends AppCompatActivity {
         TextView alsoKnownTv = findViewById(R.id.also_known_tv);
         TextView originTv = findViewById(R.id.origin_tv);
 
-        descriptionTv.setText(sandwich.getDescription());
+        descriptionTv.setText(replaceStringIfEmpty(sandwich.getDescription()));
 
-        String ingredients = convertStringListToString(sandwich.getIngredients());
+        String ingredients = concatenateAndRemoveQuotationMarksFromList(sandwich.getIngredients());
         ingredientsTv.setText(ingredients);
 
-        String alsoKnownAs = convertStringListToString(sandwich.getAlsoKnownAs());
+        String alsoKnownAs = concatenateAndRemoveQuotationMarksFromList(sandwich.getAlsoKnownAs());
         alsoKnownTv.setText(alsoKnownAs);
 
-        originTv.setText(sandwich.getPlaceOfOrigin());
+        originTv.setText(replaceStringIfEmpty(sandwich.getPlaceOfOrigin()));
     }
 
-    private String convertStringListToString(List<String> list) {
-        if (list == null) { return "N/A"; }
-        StringBuilder sb = new StringBuilder();
-        for (String string: list) {
-            String commaSeparated = string + ", ";
-            sb.append(commaSeparated);
+    // By default, quotes are left around the String elements in the List retrieved from JSON.
+    // This method concatenates the string elements and removes quotation marks for presentation to
+    // the user.
+    private String concatenateAndRemoveQuotationMarksFromList(List<String> list) {
+        if (list == null || list.isEmpty()) {
+            return "N/A";
         }
-        sb.delete(sb.length() - 2, sb.length());
-        return sb.toString().replaceAll("([^a-zA-Z_0-9, ])", "");
+
+        String rawString = TextUtils.join(", ", list);
+        return rawString.replaceAll("\"", "");
+    }
+
+    private String replaceStringIfEmpty(String string) {
+        if (string == null || string.isEmpty()) {
+            return "N/A";
+        }
+        return string;
     }
 }

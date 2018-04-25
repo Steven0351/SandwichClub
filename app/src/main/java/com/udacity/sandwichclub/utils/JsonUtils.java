@@ -2,51 +2,49 @@ package com.udacity.sandwichclub.utils;
 
 import com.udacity.sandwichclub.model.Sandwich;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class JsonUtils {
 
-    private static final int KEY_OFFSET = 4;
-
     public static Sandwich parseSandwichJson(String json) {
-        String mainName = retrieveStringValueFromJson("mainName", json);
-        List<String> alsoKnownAs = retrieveListValueFromJson("alsoKnownAs", json);
-        String placeOfOrigin = retrieveStringValueFromJson("placeOfOrigin", json);
-        String description = retrieveStringValueFromJson("description", json);
-        String image = retrieveStringValueFromJson("image", json);
-        List<String> ingredients = retrieveListValueFromJson("ingredients", json);
-        return new Sandwich(mainName, alsoKnownAs, placeOfOrigin, description, image, ingredients);
-    }
+        try {
+            JSONObject realJson = new JSONObject(json);
 
-    private static String retrieveStringValueFromJson(String key, String json) {
-        int keyEndIndex = json.indexOf("\"" + key + "\"" + ":\"") + key.length() + KEY_OFFSET;
-        int valueEndIndex = json.indexOf("\",", keyEndIndex);
+            JSONObject name = realJson.getJSONObject("name");
+            String mainName = name.getString("mainName");
+            JSONArray akaArray = name.getJSONArray("alsoKnownAs");
 
-        String escape = "\\\\";
-        String rawString = json.substring(keyEndIndex, valueEndIndex);
+            List<String> alsoKnownAs = convertJSONArrayToList(akaArray);
 
-        if (rawString.isEmpty()) {
-            return "N/A"; 
+            String placeOfOrigin = realJson.getString("placeOfOrigin");
+            String description = realJson.getString("description");
+            String image = realJson.getString("image");
+
+            JSONArray ingredientsArray = realJson.getJSONArray("ingredients");
+            List<String> ingredients = convertJSONArrayToList(ingredientsArray);
+
+            return new Sandwich(mainName, alsoKnownAs, placeOfOrigin, description, image, ingredients);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
         }
-
-        return rawString.replaceAll(escape, "");
     }
 
-    private static List<String> retrieveListValueFromJson(String key, String json) {
-        int keyEndIndex = json.indexOf("\"" + key + "\"") + key.length() + KEY_OFFSET;
-        int valueEndIndex = json.indexOf("]", keyEndIndex);
 
-        if (valueEndIndex - keyEndIndex <= 1) {
+    private static List<String> convertJSONArrayToList(JSONArray jsonArray) throws JSONException {
+        if (jsonArray.length() == 0) {
             return null;
         }
 
-        String commaSeparatedValues = json.substring(keyEndIndex, valueEndIndex);
-        String[] values = commaSeparatedValues.split(",");
-
-        return new ArrayList<>(Arrays.asList(values));
+        String joinedValues = jsonArray.join(",");
+        String[] valuesArray = joinedValues.split(",");
+        return new ArrayList<>(Arrays.asList(valuesArray));
     }
-
 
 }
